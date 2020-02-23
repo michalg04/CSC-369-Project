@@ -1,0 +1,11 @@
+//Who did what and when?
+//For each task, include the amount of time it took
+Michal:
+- gather data, clean and label
+
+Josh:
+
+Grant:
+
+Chase:
+
