@@ -10,7 +10,7 @@ Grant:
 - write algorithm to take in flattened image data, return cluster node id that it belongs to
 
 Chase:
-- write program to flatten image data
+- write program to resize and then flatten image data: 1.5hrs
 
 
 write program to evaluate 'correctness'

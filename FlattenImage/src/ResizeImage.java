@@ -12,16 +12,16 @@ import javax.imageio.ImageIO;
 public class ResizeImage {
 
 	public static void main(String[] args) throws IOException {
-		int i = 0, j = 0;
+		int i, j = 0;
 		char prevChar = '\0', currentChar;
 		File folder = new File("../../images/");
 	    File[] listOfFiles = folder.listFiles();
 	    Arrays.parallelSort(listOfFiles);
-		System.out.println("Total No of Files:" + listOfFiles.length);
+	    System.out.println("Total No. of Files:" + listOfFiles.length);
 		Image img = null;
 		BufferedImage tempPNG = null;
 		File newFilePNG = null;
-		for (;i < listOfFiles.length; i++)
+		for (i = 0;i < listOfFiles.length; i++)
 		{
 			if (listOfFiles[i].isFile())
 			{
