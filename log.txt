@@ -11,6 +11,7 @@ Grant:
 
 Chase:
 - write program to resize and then flatten image data: 1.5hrs
+    - /images (58.8MB) -> FlattenImage/resized (14.3MB) -> FlattenImage/flattened.out (28.7MB)
 
 
 write program to evaluate 'correctness'
