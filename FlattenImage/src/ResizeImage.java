@@ -14,7 +14,7 @@ public class ResizeImage {
 	public static void main(String[] args) throws IOException {
 		int i, j = 0;
 		char prevChar = '\0', currentChar;
-		File folder = new File("../../images/");
+		File folder = new File("../images/");
 	    File[] listOfFiles = folder.listFiles();
 	    Arrays.parallelSort(listOfFiles);
 	    System.out.println("Total No. of Files:" + listOfFiles.length);
@@ -32,7 +32,7 @@ public class ResizeImage {
 					prevChar = currentChar;
 				}
 				System.out.println("Resizing file:" + listOfFiles[i].getName());
-				img = ImageIO.read(new File("../../images/" + listOfFiles[i].getName()));
+				img = ImageIO.read(new File("../images/" + listOfFiles[i].getName()));
 				tempPNG = resizeImage(img, 32, 32);
 				newFilePNG = new File("./resized/" + prevChar + "_" + String.format("%04d", j) + ".png");
 				ImageIO.write(tempPNG, "png", newFilePNG);

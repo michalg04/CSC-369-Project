@@ -27,7 +27,6 @@ public class Flatten {
 		{
 			if (file.getName().charAt(0) != prevChar)
 			{
-				bw.write(file.getName().charAt(0) + "\n");
 				prevChar = file.getName().charAt(0);
 			}
 	        if (file.isFile())
@@ -37,6 +36,11 @@ public class Flatten {
 	        	
 	        	for (int y = 2; y < (image.getHeight() - 2); y++)
 	        	{
+    				if (y == 2)
+    				{
+    					bw.write(prevChar);
+    					bw.write(' ');
+    				}
 	    			for (int x = 2; x < (image.getWidth() - 2); x++)
 	    			{
 	    				if (Math.abs(image.getRGB(x, y)) > 1)
