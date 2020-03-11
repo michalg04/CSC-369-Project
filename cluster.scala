@@ -41,32 +41,63 @@ object cluster {
 		val MAX_ITER = 10
 		val EPS = .01
 
+
+		//******************** RUN INITIAL CLUSTERING ****************
+
 		// Randomly select datapoints from our input data to be clusters
-//		var oldCentroids = sc.parallelize(input.takeSample(false, k).zipWithIndex).keyBy(_._2).mapValues(x=>x._1)
+		//		var oldCentroids = sc.parallelize(input.takeSample(false, k).zipWithIndex).keyBy(_._2).mapValues(x=>x._1)
 		var oldCentroids = input.takeSample(false, k).zipWithIndex.map{case (v,k)=>(k,v)}.toArray
-		
 		// Map each data point to the index of the closest cluster
-		val clusteredData = input.keyBy(vec => computeClosestCentroid(vec, oldCentroids, vectorLength))
-		
+		var clusteredData = input.map(vec => (computeClosestCentroid(vec, oldCentroids, vectorLength),vec))
 		// Compute new centroids
-		var currCentroids = clusteredData.
-														mapValues(v=>(v,1)). // Add a one to make computing the average easier later
-														reduceByKey{(x,y) => (addVectors(x._1,y._1), x._2+y._2)}. // Add each array element wise to get a count
+		var currCentroids = clusteredData.mapValues(v=>(v,1)).
+														reduceByKey{(x,y) => (addVectors(x._1,y._1), x._2+y._2)}.
 														mapValues{case (x,y) => divideByCount(x,y)}
-		
-		
+
 		// Compute distance between old centroids and new centroids
 		var dist = sc.parallelize(oldCentroids).keyBy(x => x._1).mapValues(x => x._2).
-									join(currCentroids). 
-									mapValues{case (x,y) => computeDistBetweenPoints(x,y)}
-									.values
-//		println(dist.sum)
-									//map{case (first,second) => (first -second)*(first - second)}.
-				//					sum}// Get sum of squared differences for each cluster
+									leftOuterJoin(currCentroids).
+									mapValues{case (x,None) => (x,x)
+														case (x, Some(y)) => (x,y)}. 
+									mapValues{case (x,y) => computeDistBetweenPoints(x,y)}.
+									values.
+									sum
 									
-									// Get total sum of squared differences
-				//println(dist.foreach{x => println(x)})	
-							
+
+		var num_iterations = 0
+		
+		// Run until convergence or maximum iterations have been performed
+		while((dist > EPS) && num_iterations < MAX_ITER){
+						num_iterations += 1
+						oldCentroids = currCentroids.collect().toArray
+
+						// Map each data point to the index of the closest cluster
+						clusteredData = input.map(vec => (computeClosestCentroid(vec, oldCentroids, vectorLength),vec))
+						
+						// Compute new centroids based on previous clustering
+						currCentroids = clusteredData.mapValues(v=>(v,1)).
+																		reduceByKey{(x,y) => (addVectors(x._1,y._1), x._2+y._2)}.
+																		mapValues{case (x,y) => divideByCount(x,y)}
+						
+						// If a cluster id is missing from new ones, add it back in from the old clusters
+						for(key_value <- oldCentroids){	
+							if(currCentroids.keys.collect() contains key_value._1 == false){
+								currCentroids = currCentroids.union(sc.parallelize(Seq(key_value)))
+							}
+						}	
+						
+						// Compute distance between old centroids and new centroids
+						dist = sc.parallelize(oldCentroids).keyBy(x => x._1).mapValues(x => x._2).
+													leftOuterJoin(currCentroids).
+													mapValues{case (x,None) => (x,x)
+																		case (x, Some(y)) => (x,y)}. 
+													mapValues{case (x,y) => computeDistBetweenPoints(x,y)}.
+													values.
+													sum
+		}
+
+	// Return the cluster IDs for all of the input rows
+	clusteredData.map(x => x._1).saveAsTextFile("clusterIDs")					
 	}
 
 	def computeClosestCentroid(vector:Array[Double], centroids:Array[(Int,Array[Double])],vectorLength:Int):Int={
@@ -79,19 +110,22 @@ object cluster {
 		//distToCentroids.reduceLeft((p1,p2) => if(p2._2 < p1._2) p2 else p1)._1
 
 		var i = 0
-		var min = 10000.0
+		var min = 100000000.0
 		var argmin = 0
 
 		while (i < centroids.size){
 			var j = 0
 			var totalDiff = 0.0
+			// Get sum of squared differences for each centroid
 			while (j < vector.size){
 				totalDiff += (vector(i)-centroids(i)._2(j))*(vector(i)-centroids(i)._2(j))
+				j += 1
 			}
 			if(min > totalDiff){
 				min = totalDiff
 				argmin = i
 			}
+			i+= 1
 		}
 
 		argmin
@@ -102,9 +136,10 @@ object cluster {
 		//x.zip(y).map{case (x,y) => (x+y)}
 		val size = x.size
 		var i = 0
-		var result = Array[Double](x.size)
+		var result = new Array[Double](x.size)
 		while(i < size){
 			result(i)=x(i) + y(i)
+			i+=1
 		}
 		result
 
@@ -112,9 +147,10 @@ object cluster {
 	def divideByCount(arr:Array[Double],count:Int):Array[Double]={
 		//arr.map(x=>x/count)
 		var i = 0
-		var result = Array[Double](arr.size)
+		var result = new Array[Double](arr.size)
 		while(i < arr.size){
 			result(i) = arr(i)/count
+			i+=1
 		}
 		result
 
