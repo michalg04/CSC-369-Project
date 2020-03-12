@@ -27,21 +27,25 @@ object cluster {
 		// Read in image vectors
 		val input = sc.textFile("input/flattened.out").map(x => x.split(" ")).
 																									filter(x => x.length == 2).
-																									map(x => x(1).split("").map(x => x.toDouble))
+																									map(x => x(1).split("").map(x => x.toFloat))
 		val vectorLength = input.collect()(0).length
 	
 		// Algorithm Parameters	
-		val k = 2
-		val MAX_ITER = 1
-		val EPS = .01
+		val k = 14
+		val MAX_ITER = 10
+		val EPS = .0001
 
 
 		//******************** RUN INITIAL CLUSTERING ****************
 
 		// Randomly select datapoints from our input data to be clusters
 		var oldCentroids = input.takeSample(false, k).zipWithIndex.map{case (v,k)=>(k,v)}.toArray
+
 		// Map each data point to the index of the closest cluster
 		var clusteredData = input.map(vec => (computeClosestCentroid(vec, oldCentroids, vectorLength),vec))
+		println("(Cluster ID, number of pts in this cluster)")
+		clusteredData.map{case (x,y) => x}.countByValue().foreach{println}
+		
 		// Compute new centroids
 		var currCentroids = clusteredData.mapValues(v=>(v,1)).
 														reduceByKey{(x,y) => (addVectors(x._1,y._1), x._2+y._2)}.
@@ -55,7 +59,7 @@ object cluster {
 									mapValues{case (x,y) => computeDistBetweenPoints(x,y)}.
 									values.
 									sum
-									
+			
 
 		var num_iterations = 0
 		
@@ -87,82 +91,38 @@ object cluster {
 													mapValues{case (x,y) => computeDistBetweenPoints(x,y)}.
 													values.
 													sum
+						println("dist "+dist)
 		}
-
+	println("(Cluster ID, number of pts in this cluster)")
+	clusteredData.map(x => x._1).countByValue().foreach{println}
 	// Return the cluster IDs for all of the input rows
 	clusteredData.map(x => x._1).zipWithIndex.map{case (k,v)=>(v,k)}.
-								join(labels.zipWithIndex.map{case (k,v)=>(v,k)}). // join on position
-								collect().
-								foreach{println}//.saveAsTextFile("clusterIDs")						
+								join(labels.zipWithIndex.map{case (k,v)=>(v,k)}). // join on position to connect label with cluster
+								values. // return cluster id and label
+								saveAsTextFile("clusterIDs")						
 	}
-
-	def computeClosestCentroid(vector:Array[Double], centroids:Array[(Int,Array[Double])],vectorLength:Int):Int={
+	// Return the cluster id of the closest centroid
+	def computeClosestCentroid(vector:Array[Float], centroids:Array[(Int,Array[Float])],vectorLength:Int):Int={
 		// Compute distance to each centroid
-		//val distToCentroids = centroids.
-		//												map{case (index,x) => (index,vector.zip(x).
-		//												map{y => (y._1-y._2)*(y._1-y._2)}.sum)}
-		//
+		val distToCentroids = centroids.
+														map{case (index,x) => (index,vector.zip(x).
+														map{y => (y._1-y._2)*(y._1-y._2)}.sum)}
+		
 		// Get the argmin (i.e. index of the closest centroid)
-		//distToCentroids.reduceLeft((p1,p2) => if(p2._2 < p1._2) p2 else p1)._1
-
-		var i = 0
-		var min = 100000000.0
-		var argmin = 0
-
-		while (i < centroids.size){
-			var j = 0
-			var totalDiff = 0.0
-			// Get sum of squared differences for each centroid
-			while (j < vector.size){
-				totalDiff += (vector(i)-centroids(i)._2(j))*(vector(i)-centroids(i)._2(j))
-				j += 1
-			}
-			if(min > totalDiff){
-				min = totalDiff
-				argmin = i
-			}
-			i+= 1
-		}
-
-		argmin
+		distToCentroids.reduceLeft((p1,p2) => if(p2._2 < p1._2) p2 else p1)._1
 	}	
 
-		
-	def addVectors(x:Array[Double], y:Array[Double]):Array[Double]={
-		//x.zip(y).map{case (x,y) => (x+y)}
-		val size = x.size
-		var i = 0
-		var result = new Array[Double](x.size)
-		while(i < size){
-			result(i)=x(i) + y(i)
-			i+=1
-		}
-		result
-
+	// Adds vectors. Used to compute new centroids
+	def addVectors(x:Array[Float], y:Array[Float]):Array[Float]={
+		x.zip(y).map{case (x,y) => (x+y)}.toArray
 	}
-	def divideByCount(arr:Array[Double],count:Int):Array[Double]={
-		//arr.map(x=>x/count)
-		var i = 0
-		var result = new Array[Double](arr.size)
-		while(i < arr.size){
-			result(i) = arr(i)/count
-			i+=1
-		}
-		result
-
+	// Divide each element by a count. Helps compute new centroids
+	def divideByCount(arr:Array[Float],count:Int):Array[Float]={
+		arr.map(x=>x/count).toArray
 		}
 
 	// Compute Sum of Squares between points
-	def computeDistBetweenPoints(vector1:Array[Double], vector2:Array[Double]):Double={
-		var total = 0.0
-		var i = 0
-		while(i < vector1.size){
-			var dist = vector1(i) - vector2(i)
-			total += dist*dist
-			i += 1	
-		}
-		total
+	def computeDistBetweenPoints(vector1:Array[Float], vector2:Array[Float]):Float={
+	vector1.zip(vector2).map{y => (y._1-y._2)*(y._1-y._2)}.sum
 	}
-
-
 }
