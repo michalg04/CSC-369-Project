@@ -2,7 +2,7 @@
 //For each task, include the amount of time it took
 Michal:
 - gather data, clean and label ~ 1 hour
-- wrote program to evaluate 'correctness' (precision, accuracy, recall). Made heat map. ~ 45 mins 
+- wrote program to evaluate 'correctness' ~ 45 mins
 - made presentation ~ 20 mins
 
 Josh:
