@@ -1,7 +1,9 @@
 //Who did what and when?
 //For each task, include the amount of time it took
 Michal:
-- gather data, clean and label
+- gather data, clean and label ~ 1 hour
+- wrote program to evaluate 'correctness' (precision, accuracy, recall). Made heat map. ~ 45 mins 
+- made presentation ~ 20 mins
 
 Josh:
 - write algorithm to take in flattened image data, return cluster node id that it belongs to
@@ -14,4 +16,4 @@ Chase:
     - /images (58.8MB) -> FlattenImage/resized (14.3MB) -> FlattenImage/flattened.out (28.7MB)
 
 
-write program to evaluate 'correctness'
+
