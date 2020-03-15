@@ -9,7 +9,8 @@ Josh:
 - write algorithm to take in flattened image data, return cluster node id that it belongs to
 
 Grant:
-- write algorithm to take in flattened image data, return cluster node id that it belongs to
+- write algorithm to take in flattened image data, return cluster node id that it belongs to ~ 4 hours
+- Make report ~ 20 minutes
 
 Chase:
 - write program to resize and then flatten image data: 1.5hrs
